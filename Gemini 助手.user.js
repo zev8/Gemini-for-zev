@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Gemini 助手 (v8.7 极简图标版)
+// @name         Gemini 助手 (v8.9 智能命名版)
 // @namespace    http://tampermonkey.net/
-// @version      8.7
-// @description  Gemini 增强：图标像素级优化，去掉多余线条，精确控制间距，支持一键导航。
+// @version      8.9
+// @description  Gemini 增强：导出文件自动使用对话标题，全线性图标，修复侧边栏误触，支持一键导航。
 // @author       GeminiUser
 // @match        https://gemini.google.com/*
 // @grant        none
@@ -25,11 +25,9 @@
     };
 
     // --- 图标库 (SVG) ---
-    // 线性图标生成器 (stroke)
     const createSvgDataUri = (viewBox, path) =>
         `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`)}`;
 
-    // 填充图标生成器 (fill, 兼容旧图标)
     const createFilledSvgDataUri = (viewBox, path) =>
         `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" fill="currentColor">${path}</svg>`)}`;
 
@@ -40,7 +38,7 @@
         download: createFilledSvgDataUri('0 0 1024 1024', '<path d="M937.6 357.7c-38.5-42.6-88.8-72-144.2-84.4-11.7-53.1-39.6-101.4-80.3-138.5C664.3 90.3 601 65.9 535 65.9c-65.8 0-128.8 24.3-177.5 68.4-39.7 36-67.4 82.7-79.8 134.1-61.7 7-118.8 34.5-163.3 79-51.2 51.2-79.8 119-80.8 191.2-1 74.3 28 146.1 80.5 198.7 41.2 41.3 93.2 68 149.6 77.4 24 4 45.9-14.4 45.9-38.8v-1.4c0-19.3-14-35.6-33-38.8-92.4-15.7-162.9-96.4-162.9-193.2 0-108.1 87.9-196 196-196h1.7l36.3 0.3 3.8-36.1c10-94 88.9-164.9 183.6-164.9 95.3 0 174.3 71.4 183.7 166l3.2 32.3 32.2 3.5c99.4 10.8 174.4 94.6 174.4 194.8 0 96.8-70.6 177.4-162.9 193.2-19.1 3.3-33 20.1-33 39.5 0 24.8 22.3 43.5 46.8 39.4 55.9-9.5 107.4-36 148.4-76.9 52.1-52.1 80.8-121.4 80.8-195.1-0.1-68.4-25.3-134.1-71.1-184.8z"/><path d="M557.1 795.1h-72c-2.2 0-4-1.8-4-4V553.8c0-22 18-40 40-40s40 18 40 40v237.3c0 2.2-1.8 4-4 4z"/><path d="M498 729.1c11 16.5 35.2 16.5 46.2 0 5.2-7.7 13.8-12.3 23.1-12.3h63c22.2 0 35.4 24.8 23.1 43.2l-96.6 144.5c-9.5 14.3-22.2 22.1-35.7 22.1-13.5 0-26.2-7.9-35.7-22.1L388.8 760c-12.3-18.5 0.9-43.2 23.1-43.2h63c9.3 0 17.9 4.6 23.1 12.3z"/>'),
         wide: createFilledSvgDataUri('0 0 1024 1024', '<path d="M557.355 525.355h178.688v98.218c0 8.107 9.514 12.8 15.786 7.68l172.502-136.192a9.685 9.685 0 0 0 0-15.274l-172.502-136.32a9.728 9.728 0 0 0-15.786 7.68v98.218H557.355a8.021 8.021 0 0 0-7.979 8.022v59.989c0 4.395 3.584 7.979 7.979 7.979z m-101.334 0H277.376v98.218c0 8.107-9.515 12.8-15.787 7.68L89.088 495.061a9.685 9.685 0 0 1 0-15.274l172.459-136.32c6.4-5.12 15.786-0.512 15.786 7.68v98.218H455.98c4.437 0 8.021 3.627 8.021 8.022v59.989a8.021 8.021 0 0 1-8.021 7.979z"></path>'),
 
-        // =========== 线性优化图标 ===========
+        // =========== 线性优化图标 (8个) ===========
         // 1. 浅色模式
         light: createSvgDataUri('0 0 24 24', '<circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>'),
         // 2. 护眼模式
@@ -87,15 +85,15 @@
             #gemini-anchor-header { font-size: 14px !important; letter-spacing: 0.3px !important; color: #1f1f1f !important; border-bottom: 1px solid rgba(0,0,0,0.05) !important; }
             #gemini-anchor-list::-webkit-scrollbar { width: 4px; }
             #gemini-anchor-list::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px; }
-            
-            #gemini-anchor-list { 
+
+            #gemini-anchor-list {
                 list-style: none;
                 margin: 0;
                 overflow-y: auto;
                 flex-grow: 1;
-                padding: 10px 12px 0 12px !important; 
+                padding: 10px 12px 0 12px !important;
             }
-            
+
             #gemini-anchor-list li { margin-bottom: 2px !important; border-radius: 12px !important; transition: background-color 0.15s ease !important; border: 1px solid transparent !important; padding: 2px 4px !important; }
             #gemini-anchor-list li:hover { background-color: rgba(31, 31, 31, 0.05) !important; }
             #gemini-anchor-list li span { font-size: 13px !important; color: #444746 !important; font-weight: 500 !important; }
@@ -133,7 +131,7 @@
             #${IDS.ANCHOR_TOGGLE}.has-anchors:hover {
                  box-shadow: 0 6px 16px rgba(11, 87, 208, 0.3) !important;
             }
-            
+
             .toggle-icon, .btn-icon {
                 width: 18px !important;
                 height: 18px !important;
@@ -313,7 +311,8 @@
             };
 
             if (targetIndex >= 0 && targetIndex < queries.length) {
-                queries[targetIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // v8.8 优化：block: 'start' 确保顶部对齐
+                queries[targetIndex].scrollIntoView({ behavior: 'smooth', block: 'start' });
             } else if (targetIndex < 0) {
                 doScroll(0);
             } else if (targetIndex >= queries.length) {
@@ -373,11 +372,11 @@
                 right: '20px',
                 transform: 'translateY(calc(-50% - 50px))'
             }, document.body);
-            
+
             btn.id = IDS.ANCHOR_TOGGLE;
             btn.title = "跳转到指定回答";
             el('div', {
-                className: 'toggle-icon', 
+                className: 'toggle-icon',
                 webkitMaskImage: `url('${ICONS.pinFilled}')`, maskImage: `url('${ICONS.pinFilled}')`
             }, btn);
             btn.onclick = (e) => { e.stopPropagation(); this.togglePanel(); };
@@ -395,10 +394,10 @@
                 header.id = 'gemini-anchor-header';
                 el('div', { width: '8px', height: '8px', borderRadius: '50%', background: '#0b57d0', marginRight: '12px' }, header);
                 el('span', { fontSize: '15px' }, header).textContent = "跳转到指定回答";
-                
+
                 // 将列表容器 id 赋值给 UL
                 el('ul', { padding: '0', margin: '0' }, panel).id = 'gemini-anchor-list';
-                
+
                 const footer = el('div', { padding: '16px', background: 'transparent' }, panel);
                 const clearBtn = el('button', { width: '100%', padding: '10px', border: 'none', background: '#f8f9fa', color: '#d93025', borderRadius: '12px', cursor: 'pointer', fontSize: '13px', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: '500', transition: 'all 0.2s' }, footer);
                 clearBtn.textContent = "清除所有记录";
@@ -436,7 +435,8 @@
                 link.onclick = () => {
                     const target = document.getElementById(anchor.id);
                     if (target) {
-                        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // v8.8 优化：block: 'start'
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                         target.style.transition = 'background 0.5s';
                         const oldBg = target.style.backgroundColor;
                         target.style.backgroundColor = 'rgba(11, 87, 208, 0.1)';
@@ -444,14 +444,17 @@
                     } else {
                         setTimeout(() => {
                             const retryTarget = document.getElementById(anchor.id);
-                            if(retryTarget) retryTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            if(retryTarget) retryTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
                             else alert('未找到该回答');
                         }, 500);
                     }
                 };
                 const actionDiv = el('div', { display: 'flex', alignItems: 'center', gap: '4px' }, li);
                 const editBtn = el('div', { width: '28px', height: '28px', cursor: 'pointer', color: '#5f6368', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', transition: 'background 0.2s' }, actionDiv);
+
+                // 修复 2: 使用新的线性 edit 图标
                 el('div', { width: '16px', height: '16px', backgroundColor: 'currentColor', webkitMaskImage: `url('${ICONS.edit}')`, maskImage: `url('${ICONS.edit}')`, webkitMaskSize: 'contain', maskRepeat: 'no-repeat' }, editBtn);
+
                 editBtn.onmouseover = () => { editBtn.style.backgroundColor = 'rgba(0,0,0,0.05)'; editBtn.style.color = '#0b57d0'; };
                 editBtn.onmouseout = () => { editBtn.style.backgroundColor = 'transparent'; editBtn.style.color = '#5f6368'; };
                 editBtn.onclick = (e) => { e.stopPropagation(); ModalManager.show('重命名回答', anchor.name, (newName) => { this.data[this.getCurrentKey()][index].name = newName; this.save(); this.renderPanelList(); }); };
@@ -577,7 +580,17 @@
             if (!nodes.length) nodes = document.querySelectorAll('.user-query, .model-response, .markdown, .query-content');
             if (!nodes.length) nodes = document.querySelectorAll('main p, main li, main code');
             if (!nodes.length) return alert('导出失败：无法抓取内容');
-            let md = `# Gemini Chat Export\n> Time: ${new Date().toLocaleString()}\n\n---\n\n`;
+
+            // --- 智能命名优化 (v8.9) ---
+            const titleEl = document.querySelector('.conversation-title');
+            let fileName = 'Gemini_Chat';
+            if (titleEl && titleEl.textContent.trim()) {
+                fileName = titleEl.textContent.trim();
+            } else if (document.title) {
+                fileName = document.title;
+            }
+
+            let md = `# ${fileName}\n> Time: ${new Date().toLocaleString()}\n\n---\n\n`;
             let last = '';
             nodes.forEach(n => {
                 const text = (n.innerText || n.textContent).trim();
@@ -600,7 +613,9 @@
             const blob = new Blob([md], { type: 'text/markdown' });
             const a = el('a', { display: 'none' }, document.body);
             a.href = URL.createObjectURL(blob);
-            a.download = `${(document.title || 'Gemini_Chat').replace(/[\\/:*?"<>|]/g, '_')}.md`;
+
+            // Sanitize filename
+            a.download = `${fileName.replace(/[\\/:*?"<>|]/g, '_')}.md`;
             a.click();
             setTimeout(() => { a.remove(); URL.revokeObjectURL(a.href); }, 100);
         }
