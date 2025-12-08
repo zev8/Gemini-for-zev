@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Gemini 助手 (v7.9 侧边栏防误触版)
+// @name         Gemini 助手 (v8.4 线性图标版)
 // @namespace    http://tampermonkey.net/
-// @version      7.9
-// @description  Gemini 增强：修复导航误触左侧历史栏 Bug，增加侧边栏排除逻辑，精准定位主对话窗口。
+// @version      8.4
+// @description  Gemini 增强：图标全面线性化重构，风格极简高级，修复定位与侧边栏误触，支持一键导航。
 // @author       GeminiUser
 // @match        https://gemini.google.com/*
 // @grant        none
@@ -25,22 +25,46 @@
     };
 
     // --- 图标库 (SVG) ---
+    // 工具：生成 SVG Data URI (自动应用 currentColor 以适应深色/浅色模式)
     const createSvgDataUri = (viewBox, path) =>
+        `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`)}`;
+
+    // 这是一个特殊的 Helper，用于那些需要 fill="currentColor" 的旧图标 (保持兼容)
+    const createFilledSvgDataUri = (viewBox, path) =>
         `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" fill="currentColor">${path}</svg>`)}`;
 
     const ICONS = {
-        pinFilled: createSvgDataUri('0 0 1024 1024', '<path d="M648.728381 130.779429a73.142857 73.142857 0 0 1 22.674286 15.433142l191.561143 191.756191a73.142857 73.142857 0 0 1-22.137905 118.564571l-67.876572 30.061715-127.341714 127.488-10.093714 140.239238a73.142857 73.142857 0 0 1-124.684191 46.445714l-123.66019-123.782095-210.724572 211.699809-51.833904-51.614476 210.846476-211.821714-127.926857-128.024381a73.142857 73.142857 0 0 1 46.299428-124.635429l144.237715-10.776381 125.074285-125.220571 29.379048-67.779048a73.142857 73.142857 0 0 1 96.207238-38.034285z m-29.086476 67.120761l-34.913524 80.530286-154.087619 154.331429-171.398095 12.751238 303.323428 303.542857 12.044191-167.399619 156.233143-156.428191 80.384-35.59619-191.585524-191.73181z" p-id="9401"></path>'),
-        pinOutline: createSvgDataUri('0 0 1024 1024', '<path d="M648.728381 130.779429a73.142857 73.142857 0 0 1 22.674286 15.433142l191.561143 191.756191a73.142857 73.142857 0 0 1-22.137905 118.564571l-67.876572 30.061715-127.341714 127.488-10.093714 140.239238a73.142857 73.142857 0 0 1-124.684191 46.445714l-123.66019-123.782095-210.724572 211.699809-51.833904-51.614476 210.846476-211.821714-127.926857-128.024381a73.142857 73.142857 0 0 1 46.299428-124.635429l144.237715-10.776381 125.074285-125.220571 29.379048-67.779048a73.142857 73.142857 0 0 1 96.207238-38.034285z" p-id="9572"></path>'),
-        arrowDown: createSvgDataUri('0 0 24 24', '<path d="M12 5v14M19 12l-7 7-7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'),
-        arrowUp: createSvgDataUri('0 0 24 24', '<path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'),
+        // =========== 保持原样 (使用 createFilledSvgDataUri) ===========
+        pinFilled: createFilledSvgDataUri('0 0 1024 1024', '<path d="M648.728381 130.779429a73.142857 73.142857 0 0 1 22.674286 15.433142l191.561143 191.756191a73.142857 73.142857 0 0 1-22.137905 118.564571l-67.876572 30.061715-127.341714 127.488-10.093714 140.239238a73.142857 73.142857 0 0 1-124.684191 46.445714l-123.66019-123.782095-210.724572 211.699809-51.833904-51.614476 210.846476-211.821714-127.926857-128.024381a73.142857 73.142857 0 0 1 46.299428-124.635429l144.237715-10.776381 125.074285-125.220571 29.379048-67.779048a73.142857 73.142857 0 0 1 96.207238-38.034285z m-29.086476 67.120761l-34.913524 80.530286-154.087619 154.331429-171.398095 12.751238 303.323428 303.542857 12.044191-167.399619 156.233143-156.428191 80.384-35.59619-191.585524-191.73181z" p-id="9401"></path>'),
+        pinOutline: createFilledSvgDataUri('0 0 1024 1024', '<path d="M648.728381 130.779429a73.142857 73.142857 0 0 1 22.674286 15.433142l191.561143 191.756191a73.142857 73.142857 0 0 1-22.137905 118.564571l-67.876572 30.061715-127.341714 127.488-10.093714 140.239238a73.142857 73.142857 0 0 1-124.684191 46.445714l-123.66019-123.782095-210.724572 211.699809-51.833904-51.614476 210.846476-211.821714-127.926857-128.024381a73.142857 73.142857 0 0 1 46.299428-124.635429l144.237715-10.776381 125.074285-125.220571 29.379048-67.779048a73.142857 73.142857 0 0 1 96.207238-38.034285z" p-id="9572"></path>'),
+        download: createFilledSvgDataUri('0 0 1024 1024', '<path d="M937.6 357.7c-38.5-42.6-88.8-72-144.2-84.4-11.7-53.1-39.6-101.4-80.3-138.5C664.3 90.3 601 65.9 535 65.9c-65.8 0-128.8 24.3-177.5 68.4-39.7 36-67.4 82.7-79.8 134.1-61.7 7-118.8 34.5-163.3 79-51.2 51.2-79.8 119-80.8 191.2-1 74.3 28 146.1 80.5 198.7 41.2 41.3 93.2 68 149.6 77.4 24 4 45.9-14.4 45.9-38.8v-1.4c0-19.3-14-35.6-33-38.8-92.4-15.7-162.9-96.4-162.9-193.2 0-108.1 87.9-196 196-196h1.7l36.3 0.3 3.8-36.1c10-94 88.9-164.9 183.6-164.9 95.3 0 174.3 71.4 183.7 166l3.2 32.3 32.2 3.5c99.4 10.8 174.4 94.6 174.4 194.8 0 96.8-70.6 177.4-162.9 193.2-19.1 3.3-33 20.1-33 39.5 0 24.8 22.3 43.5 46.8 39.4 55.9-9.5 107.4-36 148.4-76.9 52.1-52.1 80.8-121.4 80.8-195.1-0.1-68.4-25.3-134.1-71.1-184.8z"/><path d="M557.1 795.1h-72c-2.2 0-4-1.8-4-4V553.8c0-22 18-40 40-40s40 18 40 40v237.3c0 2.2-1.8 4-4 4z"/><path d="M498 729.1c11 16.5 35.2 16.5 46.2 0 5.2-7.7 13.8-12.3 23.1-12.3h63c22.2 0 35.4 24.8 23.1 43.2l-96.6 144.5c-9.5 14.3-22.2 22.1-35.7 22.1-13.5 0-26.2-7.9-35.7-22.1L388.8 760c-12.3-18.5 0.9-43.2 23.1-43.2h63c9.3 0 17.9 4.6 23.1 12.3z"/>'),
+        wide: createFilledSvgDataUri('0 0 1024 1024', '<path d="M557.355 525.355h178.688v98.218c0 8.107 9.514 12.8 15.786 7.68l172.502-136.192a9.685 9.685 0 0 0 0-15.274l-172.502-136.32a9.728 9.728 0 0 0-15.786 7.68v98.218H557.355a8.021 8.021 0 0 0-7.979 8.022v59.989c0 4.395 3.584 7.979 7.979 7.979z m-101.334 0H277.376v98.218c0 8.107-9.515 12.8-15.787 7.68L89.088 495.061a9.685 9.685 0 0 1 0-15.274l172.459-136.32c6.4-5.12 15.786-0.512 15.786 7.68v98.218H455.98c4.437 0 8.021 3.627 8.021 8.022v59.989a8.021 8.021 0 0 1-8.021 7.979z"></path>'),
         edit: `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0xNyAzYTIuODUgMi44MyAwIDEgMSA0IDRMMTcuNSA3LjVsLTQtNGwzLjUtMy41WiIvPjxwYXRoIGQ9Im0xMy41IDcuNS05IDl2NGg0bDktOW0tNC00bDQtNCIvPjwvc3ZnPg==`,
-        deleteReal: `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0xNyAzYTIuODUgMi44MyAwIDEgMSA0IDRMMTcuNSA3LjVsLTQtNGwzLjUtMy41WiIvPjxwYXRoIGQ9Im0xMy41IDcuNS05IDl2NGg0bDktOW0tNC00bDQtNCIvPjwvc3ZnPg==`,
-        light: `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI1Ii8+PGxpbmUgeDE9IjEyIiB5MT0iMSIgeDI9IjEyIiB5Mj0iMyIvPjxsaW5lIHgxPSIxMiIgeTE9IjIxIiB4Mj0iMTIiIHkyPSIyMyIvPjxsaW5lIHgxPSI0LjIyIiB5MT0iNC4yMiIgeDI9IjUuNjQiIHkyPSI1LjY0Ii8+PGxpbmUgeDE9IjE4LjM2IiB5MT0iMTguMzYiIHgyPSIxOS43OCIgeTI9IjE5Ljc4Ii8+PGxpbmUgeDE9IjEiIHkxPSIxMiIgeDI9IjMiIHkyPSIxMiIvPjxsaW5lIHgxPSIyMSIgeTE9IjEyIiB4Mj0iMjMiIHkyPSIxMiIvPjxsaW5lIHgxPSI0LjIyIiB5MT0iMTkuNzgiIHgyPSI1LjY0IiB5Mj0iMTguMzYiLz48bGluZSB4MT0iMTguMzYiIHkxPSI1LjY0IiB4Mj0iMTkuNzgiIHkyPSI0LjIyIi8+PC9zdmc+`,
-        medium: `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTIgM3YxIi8+PHBhdGggZD0iTTE4LjUgMTAuNWE2LjUgNi41IDAgMSAxLTEzIDAgNi41IDYuNSAwIDAgMCAxMyAweiIvPjwvc3ZnPg==`,
-        dark: `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMjEgMTIuNzlBOSA5IDAgMSAxIDExLjIxIDMgNyA3IDAgMCAwIDIxIDEyLjc5eiIvPjwvc3ZnPg==`,
-        eyeCare: `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMSAxMnM0LTggMTEtOCAxMSA4IDExIDgtNCA4LTExIDgtMTEtOC0xMS04eiIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjMiLz48L3N2Zz4=`,
-        wide: `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTUgM2g2djZNMSA5VjN2Nk05IDIxbDMtMyAzIDNNOSAzbDMgMyAzLTNNMTQgMjFoN3YtNk0xIDE1djZoNiIvPjwvc3ZnPg==`,
-        download: `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMjEgMTV2NGEyIDIgMCAwIDEtMiAyaC01bC01IDV2LTVINWEyIDIgMCAwIDEtMiAyaC04YTIgMiAwIDAgMS0yLTJWNm0zIDBWNGEyIDIgMCAwIDEgMi0yaDRhMiAyIDAgMCAxIDIgMnYyIi8+PHBhdGggZD0iTTEwIDExdjZtNCAwdi02Ii8+PC9zdmc+`
+        deleteReal: `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0zIDZoMThtLTIgMHYxNGEyIDIgMCAwIDEtMiAyaC04YTIgMiAwIDAgMS0yLTJWNm0zIDBWNGEyIDIgMCAwIDEgMi0yaDRhMiAyIDAgMCAxIDIgMnYyIi8+PHBhdGggZD0iTTEwIDExdjZtNCAwdi02Ii8+PC9zdmc+`,
+
+        // =========== 全新优化：线性、圆润、高级 (7个) ===========
+        // 使用 createSvgDataUri 自动添加 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"
+
+        // 1. 浅色模式 (Sun): 极简太阳，光芒与核心分离
+        light: createSvgDataUri('0 0 24 24', '<circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>'),
+
+        // 2. 护眼模式 (Eye): 极简眼睛，柔和曲线
+        eyeCare: createSvgDataUri('0 0 24 24', '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'),
+
+        // 3. 舒适模式 (Coffee): 热气腾腾的咖啡杯
+        medium: createSvgDataUri('0 0 24 24', '<path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3"/>'),
+
+        // 4. 深色模式 (Moon): 极简月牙
+        dark: createSvgDataUri('0 0 24 24', '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'),
+
+        // 5. 上一个提问 (Chevron Up): 简洁圆润箭头
+        arrowUp: createSvgDataUri('0 0 24 24', '<path d="M18 15l-6-6-6 6"/>'),
+
+        // 6. 下一个提问 (Chevron Down): 简洁圆润箭头
+        arrowDown: createSvgDataUri('0 0 24 24', '<path d="M6 9l6 6 6-6"/>'),
+
+        // 7. 滚动到最后 (Arrow to Bar): 箭头指向底线，表达明确
+        scrollToBottom: createSvgDataUri('0 0 24 24', '<path d="M12 5v14M19 12l-7 7-7-7M5 19h14"/>')
     };
 
     // --- 样式定义 ---
@@ -49,22 +73,22 @@
         medium: `
             html { filter: invert(0.85) hue-rotate(180deg) brightness(0.9) !important; background: #2d2d2d !important; min-height: 100vh; }
             img, video, canvas, .gds-avatar, iframe { filter: invert(1) hue-rotate(180deg) !important; }
-            #${IDS.THEME_PANEL}, #${IDS.ANCHOR_TOGGLE}, #${IDS.SCROLL_BTN}, #${IDS.NAV_PREV_BTN}, #${IDS.NAV_NEXT_BTN}, #${IDS.ANCHOR_PANEL}, #${IDS.MODAL} { background: rgba(255,255,255,0.95) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important; }
+            #${IDS.THEME_PANEL}, #${IDS.ANCHOR_TOGGLE}, .gemini-float-btn, #${IDS.ANCHOR_PANEL}, #${IDS.MODAL} { background: rgba(255,255,255,0.95) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important; }
             #${IDS.MODAL} input { color: #333 !important; background: #fff !important; }
         `,
         dark: `
             html { filter: invert(0.92) hue-rotate(180deg) brightness(0.95) !important; background: #0d0d0d !important; min-height: 100vh; }
             img, video, canvas, .gds-avatar, iframe { filter: invert(1) hue-rotate(180deg) !important; }
-            #${IDS.THEME_PANEL}, #${IDS.ANCHOR_TOGGLE}, #${IDS.SCROLL_BTN}, #${IDS.NAV_PREV_BTN}, #${IDS.NAV_NEXT_BTN}, #${IDS.ANCHOR_PANEL}, #${IDS.MODAL} { background: rgba(255,255,255,0.95) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; border: 1px solid rgba(0,0,0,0.05) !important; }
+            #${IDS.THEME_PANEL}, #${IDS.ANCHOR_TOGGLE}, .gemini-float-btn, #${IDS.ANCHOR_PANEL}, #${IDS.MODAL} { background: rgba(255,255,255,0.95) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; border: 1px solid rgba(0,0,0,0.05) !important; }
             #${IDS.MODAL} input { color: #000 !important; background: #f0f0f0 !important; }
         `,
         eyeCare: `
             html { filter: sepia(0.1) brightness(1.03) contrast(1.03) saturate(0.9) !important; background: #fffff5 !important; }
-            #${IDS.THEME_PANEL}, #${IDS.ANCHOR_TOGGLE}, #${IDS.SCROLL_BTN}, #${IDS.NAV_PREV_BTN}, #${IDS.NAV_NEXT_BTN}, #${IDS.ANCHOR_PANEL}, #${IDS.MODAL} { filter: sepia(0) !important; background: rgba(255,252,245,0.95) !important; border: 1px solid #e0e0d0 !important; }
+            #${IDS.THEME_PANEL}, #${IDS.ANCHOR_TOGGLE}, .gemini-float-btn, #${IDS.ANCHOR_PANEL}, #${IDS.MODAL} { filter: sepia(0) !important; background: rgba(255,252,245,0.95) !important; border: 1px solid #e0e0d0 !important; }
             div[data-active="true"] { background: #f0f4db !important; color: #556b2f !important; }
         `,
         common: `
-            /* ... (保持原有面板美化代码) ... */
+            /* ... (面板美化代码) ... */
             #${IDS.ANCHOR_PANEL} { font-family: 'Google Sans', 'Segoe UI', system-ui, sans-serif !important; border: 1px solid rgba(0,0,0,0.08) !important; backdrop-filter: blur(12px) !important; background: rgba(255, 255, 255, 0.9) !important; box-shadow: 0 12px 32px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.05) !important; border-radius: 20px !important; }
             #gemini-anchor-header { font-size: 14px !important; letter-spacing: 0.3px !important; color: #1f1f1f !important; border-bottom: 1px solid rgba(0,0,0,0.05) !important; }
             #gemini-anchor-list::-webkit-scrollbar { width: 4px; }
@@ -73,22 +97,55 @@
             #gemini-anchor-list li:hover { background-color: rgba(31, 31, 31, 0.05) !important; }
             #gemini-anchor-list li span { font-size: 13px !important; color: #444746 !important; font-weight: 500 !important; }
 
-            /* 悬浮球 (Toggle) */
-            #${IDS.ANCHOR_TOGGLE} { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; }
-            #${IDS.ANCHOR_TOGGLE}.has-anchors { background-color: #d3e3fd !important; box-shadow: 0 4px 12px rgba(11, 87, 208, 0.25) !important; color: #0b57d0 !important; }
-            #${IDS.ANCHOR_TOGGLE}.has-anchors .toggle-icon { color: #0b57d0 !important; transform: scale(1.05); }
-            #${IDS.ANCHOR_TOGGLE}.empty { background-color: rgba(255, 255, 255, 0.8) !important; color: #747775 !important; box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important; }
-            #${IDS.ANCHOR_TOGGLE}.empty .toggle-icon { opacity: 0.7; }
-
-            /* 按钮通用样式 */
-            .gemini-float-btn {
-                width: 40px !important; height: 40px !important; border-radius: 50% !important;
-                background: #fff !important; box-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.2) !important;
-                display: flex !important; align-items: center !important; justify-content: center !important; cursor: pointer !important;
-                z-index: 9997 !important; transition: all 0.2s !important; border: 1px solid #dadce0 !important;
+            /* 悬浮球 (Toggle) 与 浮动按钮 (Float Btn) 的统一视觉 */
+            /* 1. 基础容器样式 (尺寸, 圆角, 默认阴影, 背景) */
+            #${IDS.ANCHOR_TOGGLE}, .gemini-float-btn {
+                position: fixed;
+                width: 40px !important;
+                height: 40px !important;
+                border-radius: 50% !important;
+                background-color: rgba(255, 255, 255, 0.8) !important; /* 默认半透明白 */
+                box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important; /* 柔和投影 */
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                cursor: pointer !important;
+                z-index: 9997 !important;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                color: #747775 !important; /* 淡灰色图标 */
+                border: none !important; /* 无边框 */
             }
-            .gemini-float-btn:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important; transform: translateY(-1px); }
 
+            /* 2. 悬浮状态 */
+            #${IDS.ANCHOR_TOGGLE}:hover, .gemini-float-btn:hover {
+                background-color: #fff !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; /* 加深投影 */
+                transform: translateY(-1px); /* 轻微上浮 */
+                color: #444746 !important; /* 稍微深一点的灰 */
+            }
+
+            /* 3. 锚点特有状态：有数据时变蓝 */
+            #${IDS.ANCHOR_TOGGLE}.has-anchors {
+                background-color: #d3e3fd !important;
+                color: #0b57d0 !important;
+                box-shadow: 0 4px 12px rgba(11, 87, 208, 0.25) !important;
+            }
+            #${IDS.ANCHOR_TOGGLE}.has-anchors:hover {
+                 box-shadow: 0 6px 16px rgba(11, 87, 208, 0.3) !important;
+            }
+
+            /* 4. 内部图标容器 (统一微缩到 18px，留白更多) */
+            .toggle-icon, .btn-icon {
+                width: 18px !important;
+                height: 18px !important;
+                background-color: currentColor;
+                -webkit-mask-size: contain; mask-size: contain;
+                -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+                -webkit-mask-position: center; mask-position: center;
+                transition: transform 0.2s;
+            }
+
+            /* ... (其他样式) ... */
             .gemini-anchor-wrapper { display: flex !important; align-items: center !important; justify-content: center !important; height: 32px !important; width: 32px !important; margin-right: 6px !important; }
             .gemini-anchor-btn-native { background-color: transparent !important; color: #5f6368 !important; border: none !important; border-radius: 50% !important; cursor: pointer !important; display: flex !important; align-items: center !important; justify-content: center !important; width: 32px !important; height: 32px !important; padding: 0 !important; margin: 0 !important; flex: 0 0 auto !important; transition: background-color 0.2s, color 0.2s !important; }
             .gemini-anchor-btn-native:hover { background-color: rgba(60,64,67,.08) !important; color: #1f1f1f !important; }
@@ -183,7 +240,7 @@
         }
     };
 
-    // --- 导航模块 (精准滚动修复) ---
+    // --- 导航模块 (精准滚动修复 + 样式统一) ---
     const NavManager = {
         init() {
             this.renderNavBtns();
@@ -192,9 +249,11 @@
             return Array.from(document.querySelectorAll('user-query'));
         },
         renderNavBtns() {
+            // 上一个：位置 bottom: 130px
             if (!document.getElementById(IDS.NAV_PREV_BTN)) {
                 this.createBtn(IDS.NAV_PREV_BTN, ICONS.arrowUp, '上一个提问', '130px', () => this.jump(-1));
             }
+            // 下一个：位置 bottom: 80px (间距 50px)
             if (!document.getElementById(IDS.NAV_NEXT_BTN)) {
                 this.createBtn(IDS.NAV_NEXT_BTN, ICONS.arrowDown, '下一个提问', '80px', () => this.jump(1));
             }
@@ -205,10 +264,10 @@
             }, document.body);
             btn.id = id;
             btn.title = title;
+            // 使用 mask 技术，使图标颜色跟随文字颜色 (currentColor)
             el('div', {
-                width: '24px', height: '24px', backgroundColor: '#5f6368',
-                webkitMaskImage: `url('${iconSvg}')`, maskImage: `url('${iconSvg}')`,
-                webkitMaskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center'
+                className: 'btn-icon',
+                webkitMaskImage: `url('${iconSvg}')`, maskImage: `url('${iconSvg}')`
             }, btn);
             btn.onclick = (e) => { e.stopPropagation(); onClick(); };
             return btn;
@@ -232,29 +291,19 @@
 
             let targetIndex = currentIndex + direction;
 
-            // --- 核心修复 v7.9：精准锁定主内容滚动条 ---
+            // --- 侧边栏排除逻辑 (v7.9) ---
             const getMainScroller = () => {
-                // 1. 尝试直接获取常见的主窗口 ID
                 const explicit = document.querySelector('infinite-scroller[data-test-id="chat-history-container"]');
                 if (explicit) return explicit;
-
-                // 2. 智能筛选：排除侧边栏，选最宽的那个
                 const scrollers = Array.from(document.querySelectorAll('infinite-scroller'));
                 if (scrollers.length === 0) return document.body;
-
-                // 过滤掉包含在侧边栏 class 内的 scroller
                 const candidates = scrollers.filter(el => {
-                    return !el.closest('.sidenav-with-history-container') && // 用户提供的侧边栏类名
-                           !el.closest('mat-sidenav'); // 通用的侧边栏标签
+                    return !el.closest('.sidenav-with-history-container') && !el.closest('mat-sidenav');
                 });
-
                 if (candidates.length > 0) {
-                    // 按照宽度降序排列（主对话窗口一定比侧边栏宽）
                     candidates.sort((a, b) => b.clientWidth - a.clientWidth);
-                    // 返回最宽的那个
                     return candidates[0];
                 }
-
                 return document.body;
             };
 
@@ -268,10 +317,8 @@
             if (targetIndex >= 0 && targetIndex < queries.length) {
                 queries[targetIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
             } else if (targetIndex < 0) {
-                // 边界：回到顶部
                 doScroll(0);
             } else if (targetIndex >= queries.length) {
-                // 边界：回到底部
                 doScroll(scroller.scrollHeight);
             }
         }
@@ -305,7 +352,6 @@
             this.updateToggleVisuals();
         },
         getCurrentKey() { return window.location.pathname; },
-        // 同步更新这里的获取逻辑
         getScroller() {
             const scrollers = Array.from(document.querySelectorAll('infinite-scroller'));
             const candidates = scrollers.filter(el => !el.closest('.sidenav-with-history-container') && !el.closest('mat-sidenav'));
@@ -324,16 +370,18 @@
         },
         renderToggle() {
             if (document.getElementById(IDS.ANCHOR_TOGGLE)) return;
+            // 修复 v8.2 定位错误：将样式属性作为对象传递，而不是字符串
             const btn = el('div', {
-                position: 'fixed', top: '50%', right: '20px', width: '40px', height: '40px', borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: '9999', transform: 'translateY(calc(-50% - 50px))'
+                top: '50%',
+                right: '20px',
+                transform: 'translateY(calc(-50% - 50px))'
             }, document.body);
+
             btn.id = IDS.ANCHOR_TOGGLE;
             btn.title = "跳转到指定回答";
             el('div', {
-                className: 'toggle-icon', width: '24px', height: '24px', backgroundColor: 'currentColor',
-                webkitMaskImage: `url('${ICONS.pinFilled}')`, maskImage: `url('${ICONS.pinFilled}')`,
-                webkitMaskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center', transition: 'transform 0.2s'
+                className: 'toggle-icon',
+                webkitMaskImage: `url('${ICONS.pinFilled}')`, maskImage: `url('${ICONS.pinFilled}')`
             }, btn);
             btn.onclick = (e) => { e.stopPropagation(); this.togglePanel(); };
             this.updateToggleVisuals();
@@ -418,6 +466,7 @@
             });
         },
         renderScrollBtn() {
+            // 滚动到底部：位置 bottom: 30px
             if (document.getElementById(IDS.SCROLL_BTN)) return;
             const btn = el('div', {
                 position: 'fixed', bottom: '30px', right: '20px', className: 'gemini-float-btn'
@@ -425,13 +474,13 @@
             btn.id = IDS.SCROLL_BTN;
             btn.title = "滚动到底部";
             el('div', {
-                width: '24px', height: '24px', backgroundColor: '#1f6fea',
-                webkitMaskImage: `url('${ICONS.arrowDown}')`, maskImage: `url('${ICONS.arrowDown}')`,
-                webkitMaskSize: 'cover', maskSize: 'cover'
+                className: 'btn-icon',
+                webkitMaskImage: `url('${ICONS.scrollToBottom}')`, maskImage: `url('${ICONS.scrollToBottom}')`
             }, btn);
             btn.onclick = () => {
                 const scroller = this.getScroller();
-                if(scroller) scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' });
+                if(scroller === document.body) window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                else scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' });
             };
         },
         injectBtn(node, actionBar) {
