@@ -1,6 +1,8 @@
 # Gemini 助手 (Gemini Assistant)
 
-一个功能强大的 Google Gemini 油猴 (Tampermonkey) 增强脚本，专注于提升阅读体验、导航效率和界面美观度。![Uploading image.png…]()
+一个功能强大的 Google Gemini 油猴 (Tampermonkey) 增强脚本，专注于提升阅读体验、导航效率和界面美观度。
+
+https://github.com/zev8/Gemini-for-zev/issues/1#issue-3706508972
 
 
 ## ✨ 主要功能
