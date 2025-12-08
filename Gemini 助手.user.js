@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Gemini 助手 (v8.4 线性图标版)
+// @name         Gemini 助手 (v8.7 极简图标版)
 // @namespace    http://tampermonkey.net/
-// @version      8.4
-// @description  Gemini 增强：图标全面线性化重构，风格极简高级，修复定位与侧边栏误触，支持一键导航。
+// @version      8.7
+// @description  Gemini 增强：图标像素级优化，去掉多余线条，精确控制间距，支持一键导航。
 // @author       GeminiUser
 // @match        https://gemini.google.com/*
 // @grant        none
@@ -25,46 +25,40 @@
     };
 
     // --- 图标库 (SVG) ---
-    // 工具：生成 SVG Data URI (自动应用 currentColor 以适应深色/浅色模式)
+    // 线性图标生成器 (stroke)
     const createSvgDataUri = (viewBox, path) =>
         `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`)}`;
 
-    // 这是一个特殊的 Helper，用于那些需要 fill="currentColor" 的旧图标 (保持兼容)
+    // 填充图标生成器 (fill, 兼容旧图标)
     const createFilledSvgDataUri = (viewBox, path) =>
         `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" fill="currentColor">${path}</svg>`)}`;
 
     const ICONS = {
-        // =========== 保持原样 (使用 createFilledSvgDataUri) ===========
+        // =========== 保持原样 (填充风格) ===========
         pinFilled: createFilledSvgDataUri('0 0 1024 1024', '<path d="M648.728381 130.779429a73.142857 73.142857 0 0 1 22.674286 15.433142l191.561143 191.756191a73.142857 73.142857 0 0 1-22.137905 118.564571l-67.876572 30.061715-127.341714 127.488-10.093714 140.239238a73.142857 73.142857 0 0 1-124.684191 46.445714l-123.66019-123.782095-210.724572 211.699809-51.833904-51.614476 210.846476-211.821714-127.926857-128.024381a73.142857 73.142857 0 0 1 46.299428-124.635429l144.237715-10.776381 125.074285-125.220571 29.379048-67.779048a73.142857 73.142857 0 0 1 96.207238-38.034285z m-29.086476 67.120761l-34.913524 80.530286-154.087619 154.331429-171.398095 12.751238 303.323428 303.542857 12.044191-167.399619 156.233143-156.428191 80.384-35.59619-191.585524-191.73181z" p-id="9401"></path>'),
         pinOutline: createFilledSvgDataUri('0 0 1024 1024', '<path d="M648.728381 130.779429a73.142857 73.142857 0 0 1 22.674286 15.433142l191.561143 191.756191a73.142857 73.142857 0 0 1-22.137905 118.564571l-67.876572 30.061715-127.341714 127.488-10.093714 140.239238a73.142857 73.142857 0 0 1-124.684191 46.445714l-123.66019-123.782095-210.724572 211.699809-51.833904-51.614476 210.846476-211.821714-127.926857-128.024381a73.142857 73.142857 0 0 1 46.299428-124.635429l144.237715-10.776381 125.074285-125.220571 29.379048-67.779048a73.142857 73.142857 0 0 1 96.207238-38.034285z" p-id="9572"></path>'),
         download: createFilledSvgDataUri('0 0 1024 1024', '<path d="M937.6 357.7c-38.5-42.6-88.8-72-144.2-84.4-11.7-53.1-39.6-101.4-80.3-138.5C664.3 90.3 601 65.9 535 65.9c-65.8 0-128.8 24.3-177.5 68.4-39.7 36-67.4 82.7-79.8 134.1-61.7 7-118.8 34.5-163.3 79-51.2 51.2-79.8 119-80.8 191.2-1 74.3 28 146.1 80.5 198.7 41.2 41.3 93.2 68 149.6 77.4 24 4 45.9-14.4 45.9-38.8v-1.4c0-19.3-14-35.6-33-38.8-92.4-15.7-162.9-96.4-162.9-193.2 0-108.1 87.9-196 196-196h1.7l36.3 0.3 3.8-36.1c10-94 88.9-164.9 183.6-164.9 95.3 0 174.3 71.4 183.7 166l3.2 32.3 32.2 3.5c99.4 10.8 174.4 94.6 174.4 194.8 0 96.8-70.6 177.4-162.9 193.2-19.1 3.3-33 20.1-33 39.5 0 24.8 22.3 43.5 46.8 39.4 55.9-9.5 107.4-36 148.4-76.9 52.1-52.1 80.8-121.4 80.8-195.1-0.1-68.4-25.3-134.1-71.1-184.8z"/><path d="M557.1 795.1h-72c-2.2 0-4-1.8-4-4V553.8c0-22 18-40 40-40s40 18 40 40v237.3c0 2.2-1.8 4-4 4z"/><path d="M498 729.1c11 16.5 35.2 16.5 46.2 0 5.2-7.7 13.8-12.3 23.1-12.3h63c22.2 0 35.4 24.8 23.1 43.2l-96.6 144.5c-9.5 14.3-22.2 22.1-35.7 22.1-13.5 0-26.2-7.9-35.7-22.1L388.8 760c-12.3-18.5 0.9-43.2 23.1-43.2h63c9.3 0 17.9 4.6 23.1 12.3z"/>'),
         wide: createFilledSvgDataUri('0 0 1024 1024', '<path d="M557.355 525.355h178.688v98.218c0 8.107 9.514 12.8 15.786 7.68l172.502-136.192a9.685 9.685 0 0 0 0-15.274l-172.502-136.32a9.728 9.728 0 0 0-15.786 7.68v98.218H557.355a8.021 8.021 0 0 0-7.979 8.022v59.989c0 4.395 3.584 7.979 7.979 7.979z m-101.334 0H277.376v98.218c0 8.107-9.515 12.8-15.787 7.68L89.088 495.061a9.685 9.685 0 0 1 0-15.274l172.459-136.32c6.4-5.12 15.786-0.512 15.786 7.68v98.218H455.98c4.437 0 8.021 3.627 8.021 8.022v59.989a8.021 8.021 0 0 1-8.021 7.979z"></path>'),
-        edit: `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0xNyAzYTIuODUgMi44MyAwIDEgMSA0IDRMMTcuNSA3LjVsLTQtNGwzLjUtMy41WiIvPjxwYXRoIGQ9Im0xMy41IDcuNS05IDl2NGg0bDktOW0tNC00bDQtNCIvPjwvc3ZnPg==`,
-        deleteReal: `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0zIDZoMThtLTIgMHYxNGEyIDIgMCAwIDEtMiAyaC04YTIgMiAwIDAgMS0yLTJWNm0zIDBWNGEyIDIgMCAwIDEgMi0yaDRhMiAyIDAgMCAxIDIgMnYyIi8+PHBhdGggZD0iTTEwIDExdjZtNCAwdi02Ii8+PC9zdmc+`,
 
-        // =========== 全新优化：线性、圆润、高级 (7个) ===========
-        // 使用 createSvgDataUri 自动添加 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"
-
-        // 1. 浅色模式 (Sun): 极简太阳，光芒与核心分离
+        // =========== 线性优化图标 ===========
+        // 1. 浅色模式
         light: createSvgDataUri('0 0 24 24', '<circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>'),
-
-        // 2. 护眼模式 (Eye): 极简眼睛，柔和曲线
+        // 2. 护眼模式
         eyeCare: createSvgDataUri('0 0 24 24', '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'),
-
-        // 3. 舒适模式 (Coffee): 热气腾腾的咖啡杯
+        // 3. 舒适模式
         medium: createSvgDataUri('0 0 24 24', '<path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3"/>'),
-
-        // 4. 深色模式 (Moon): 极简月牙
+        // 4. 深色模式
         dark: createSvgDataUri('0 0 24 24', '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'),
-
-        // 5. 上一个提问 (Chevron Up): 简洁圆润箭头
+        // 5. 上一个提问
         arrowUp: createSvgDataUri('0 0 24 24', '<path d="M18 15l-6-6-6 6"/>'),
-
-        // 6. 下一个提问 (Chevron Down): 简洁圆润箭头
+        // 6. 下一个提问
         arrowDown: createSvgDataUri('0 0 24 24', '<path d="M6 9l6 6 6-6"/>'),
-
-        // 7. 滚动到最后 (Arrow to Bar): 箭头指向底线，表达明确
-        scrollToBottom: createSvgDataUri('0 0 24 24', '<path d="M12 5v14M19 12l-7 7-7-7M5 19h14"/>')
+        // 7. 滚动到最后 (优化：无竖线，1px 间距)
+        scrollToBottom: createSvgDataUri('0 0 24 24', '<path d="M5 11l7 7 7-7M5 21h14"/>'),
+        // 8. 重命名
+        edit: createSvgDataUri('0 0 24 24', '<path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>'),
+        // 9. 删除
+        deleteReal: createSvgDataUri('0 0 24 24', '<path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6m4-6v6"/>')
     };
 
     // --- 样式定义 ---
@@ -88,43 +82,49 @@
             div[data-active="true"] { background: #f0f4db !important; color: #556b2f !important; }
         `,
         common: `
-            /* ... (面板美化代码) ... */
+            /* 面板美化 */
             #${IDS.ANCHOR_PANEL} { font-family: 'Google Sans', 'Segoe UI', system-ui, sans-serif !important; border: 1px solid rgba(0,0,0,0.08) !important; backdrop-filter: blur(12px) !important; background: rgba(255, 255, 255, 0.9) !important; box-shadow: 0 12px 32px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.05) !important; border-radius: 20px !important; }
             #gemini-anchor-header { font-size: 14px !important; letter-spacing: 0.3px !important; color: #1f1f1f !important; border-bottom: 1px solid rgba(0,0,0,0.05) !important; }
             #gemini-anchor-list::-webkit-scrollbar { width: 4px; }
             #gemini-anchor-list::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px; }
+            
+            #gemini-anchor-list { 
+                list-style: none;
+                margin: 0;
+                overflow-y: auto;
+                flex-grow: 1;
+                padding: 10px 12px 0 12px !important; 
+            }
+            
             #gemini-anchor-list li { margin-bottom: 2px !important; border-radius: 12px !important; transition: background-color 0.15s ease !important; border: 1px solid transparent !important; padding: 2px 4px !important; }
             #gemini-anchor-list li:hover { background-color: rgba(31, 31, 31, 0.05) !important; }
             #gemini-anchor-list li span { font-size: 13px !important; color: #444746 !important; font-weight: 500 !important; }
 
             /* 悬浮球 (Toggle) 与 浮动按钮 (Float Btn) 的统一视觉 */
-            /* 1. 基础容器样式 (尺寸, 圆角, 默认阴影, 背景) */
             #${IDS.ANCHOR_TOGGLE}, .gemini-float-btn {
                 position: fixed;
                 width: 40px !important;
                 height: 40px !important;
                 border-radius: 50% !important;
-                background-color: rgba(255, 255, 255, 0.8) !important; /* 默认半透明白 */
-                box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important; /* 柔和投影 */
+                background-color: rgba(255, 255, 255, 0.8) !important;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
                 display: flex !important;
                 align-items: center !important;
                 justify-content: center !important;
                 cursor: pointer !important;
                 z-index: 9997 !important;
                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-                color: #747775 !important; /* 淡灰色图标 */
-                border: none !important; /* 无边框 */
+                color: #747775 !important;
+                border: none !important;
             }
 
-            /* 2. 悬浮状态 */
             #${IDS.ANCHOR_TOGGLE}:hover, .gemini-float-btn:hover {
                 background-color: #fff !important;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; /* 加深投影 */
-                transform: translateY(-1px); /* 轻微上浮 */
-                color: #444746 !important; /* 稍微深一点的灰 */
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+                transform: translateY(-1px);
+                color: #444746 !important;
             }
 
-            /* 3. 锚点特有状态：有数据时变蓝 */
             #${IDS.ANCHOR_TOGGLE}.has-anchors {
                 background-color: #d3e3fd !important;
                 color: #0b57d0 !important;
@@ -133,8 +133,7 @@
             #${IDS.ANCHOR_TOGGLE}.has-anchors:hover {
                  box-shadow: 0 6px 16px rgba(11, 87, 208, 0.3) !important;
             }
-
-            /* 4. 内部图标容器 (统一微缩到 18px，留白更多) */
+            
             .toggle-icon, .btn-icon {
                 width: 18px !important;
                 height: 18px !important;
@@ -145,7 +144,6 @@
                 transition: transform 0.2s;
             }
 
-            /* ... (其他样式) ... */
             .gemini-anchor-wrapper { display: flex !important; align-items: center !important; justify-content: center !important; height: 32px !important; width: 32px !important; margin-right: 6px !important; }
             .gemini-anchor-btn-native { background-color: transparent !important; color: #5f6368 !important; border: none !important; border-radius: 50% !important; cursor: pointer !important; display: flex !important; align-items: center !important; justify-content: center !important; width: 32px !important; height: 32px !important; padding: 0 !important; margin: 0 !important; flex: 0 0 auto !important; transition: background-color 0.2s, color 0.2s !important; }
             .gemini-anchor-btn-native:hover { background-color: rgba(60,64,67,.08) !important; color: #1f1f1f !important; }
@@ -370,17 +368,16 @@
         },
         renderToggle() {
             if (document.getElementById(IDS.ANCHOR_TOGGLE)) return;
-            // 修复 v8.2 定位错误：将样式属性作为对象传递，而不是字符串
             const btn = el('div', {
                 top: '50%',
                 right: '20px',
                 transform: 'translateY(calc(-50% - 50px))'
             }, document.body);
-
+            
             btn.id = IDS.ANCHOR_TOGGLE;
             btn.title = "跳转到指定回答";
             el('div', {
-                className: 'toggle-icon',
+                className: 'toggle-icon', 
                 webkitMaskImage: `url('${ICONS.pinFilled}')`, maskImage: `url('${ICONS.pinFilled}')`
             }, btn);
             btn.onclick = (e) => { e.stopPropagation(); this.togglePanel(); };
@@ -398,7 +395,10 @@
                 header.id = 'gemini-anchor-header';
                 el('div', { width: '8px', height: '8px', borderRadius: '50%', background: '#0b57d0', marginRight: '12px' }, header);
                 el('span', { fontSize: '15px' }, header).textContent = "跳转到指定回答";
-                el('ul', { listStyle: 'none', padding: '0 12px', margin: '0', overflowY: 'auto', flexGrow: '1' }, panel).id = 'gemini-anchor-list';
+                
+                // 将列表容器 id 赋值给 UL
+                el('ul', { padding: '0', margin: '0' }, panel).id = 'gemini-anchor-list';
+                
                 const footer = el('div', { padding: '16px', background: 'transparent' }, panel);
                 const clearBtn = el('button', { width: '100%', padding: '10px', border: 'none', background: '#f8f9fa', color: '#d93025', borderRadius: '12px', cursor: 'pointer', fontSize: '13px', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: '500', transition: 'all 0.2s' }, footer);
                 clearBtn.textContent = "清除所有记录";
