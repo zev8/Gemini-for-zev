@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Gemini 助手 (v8.9 智能命名版)
+// @name         Gemini 助手 (v9.0)
 // @namespace    http://tampermonkey.net/
 // @version      8.9
 // @description  Gemini 增强：导出文件自动使用对话标题，全线性图标，修复侧边栏误触，支持一键导航。
@@ -27,7 +27,6 @@
     // --- 图标库 (SVG) ---
     const createSvgDataUri = (viewBox, path) =>
         `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`)}`;
-
     const createFilledSvgDataUri = (viewBox, path) =>
         `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" fill="currentColor">${path}</svg>`)}`;
 
@@ -63,28 +62,56 @@
     const CSS_RULES = {
         light: '',
         medium: `
-            html { filter: invert(0.85) hue-rotate(180deg) brightness(0.9) !important; background: #2d2d2d !important; min-height: 100vh; }
-            img, video, canvas, .gds-avatar, iframe { filter: invert(1) hue-rotate(180deg) !important; }
-            #${IDS.THEME_PANEL}, #${IDS.ANCHOR_TOGGLE}, .gemini-float-btn, #${IDS.ANCHOR_PANEL}, #${IDS.MODAL} { background: rgba(255,255,255,0.95) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important; }
-            #${IDS.MODAL} input { color: #333 !important; background: #fff !important; }
+            html { filter: invert(0.85) hue-rotate(180deg) brightness(0.9) !important;
+            background: #2d2d2d !important; min-height: 100vh; }
+            img, video, canvas, .gds-avatar, iframe { filter: invert(1) hue-rotate(180deg) !important;
+            }
+            #${IDS.THEME_PANEL}, #${IDS.ANCHOR_TOGGLE}, .gemini-float-btn, #${IDS.ANCHOR_PANEL}, #${IDS.MODAL} { background: rgba(255,255,255,0.95) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important; }
+            #${IDS.MODAL} input { color: #333 !important;
+            background: #fff !important; }
         `,
         dark: `
-            html { filter: invert(0.92) hue-rotate(180deg) brightness(0.95) !important; background: #0d0d0d !important; min-height: 100vh; }
-            img, video, canvas, .gds-avatar, iframe { filter: invert(1) hue-rotate(180deg) !important; }
-            #${IDS.THEME_PANEL}, #${IDS.ANCHOR_TOGGLE}, .gemini-float-btn, #${IDS.ANCHOR_PANEL}, #${IDS.MODAL} { background: rgba(255,255,255,0.95) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; border: 1px solid rgba(0,0,0,0.05) !important; }
-            #${IDS.MODAL} input { color: #000 !important; background: #f0f0f0 !important; }
+            html { filter: invert(0.92) hue-rotate(180deg) brightness(0.95) !important;
+            background: #0d0d0d !important; min-height: 100vh; }
+            img, video, canvas, .gds-avatar, iframe { filter: invert(1) hue-rotate(180deg) !important;
+            }
+            #${IDS.THEME_PANEL}, #${IDS.ANCHOR_TOGGLE}, .gemini-float-btn, #${IDS.ANCHOR_PANEL}, #${IDS.MODAL} { background: rgba(255,255,255,0.95) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; border: 1px solid rgba(0,0,0,0.05) !important;
+            }
+            #${IDS.MODAL} input { color: #000 !important;
+            background: #f0f0f0 !important; }
         `,
+        // 3. 舒适模式 (护眼 - 定制版) [已根据您的要求精确调整]
         eyeCare: `
-            html { filter: sepia(0.1) brightness(1.03) contrast(1.03) saturate(0.9) !important; background: #fffff5 !important; }
-            #${IDS.THEME_PANEL}, #${IDS.ANCHOR_TOGGLE}, .gemini-float-btn, #${IDS.ANCHOR_PANEL}, #${IDS.MODAL} { filter: sepia(0) !important; background: rgba(255,252,245,0.95) !important; border: 1px solid #e0e0d0 !important; }
-            div[data-active="true"] { background: #f0f4db !important; color: #556b2f !important; }
+            html {
+                /* 亮度: 0.95, Sepia: 0.7, 饱和度: 1.5, 背景: #f3e6c1 */
+                filter: invert(10%) sepia(15%) saturate(100%) hue-rotate(354deg) brightness(106%) contrast(101%) !important;
+                background: #000000 !important;
+            }
+            /* 面板颜色适配 */
+            #${IDS.THEME_PANEL}, #${IDS.ANCHOR_TOGGLE}, .gemini-float-btn, #${IDS.ANCHOR_PANEL}, #${IDS.MODAL} {
+                filter: sepia(0.1) !important;
+                background: #fff3cf !important;
+                border: 1px solid #f0d4ac !important;
+            }
+            div[data-active="true"] {
+                background: #e6d0a0 !important;
+                color: #5d4037 !important;
+            }
         `,
         common: `
             /* 面板美化 */
-            #${IDS.ANCHOR_PANEL} { font-family: 'Google Sans', 'Segoe UI', system-ui, sans-serif !important; border: 1px solid rgba(0,0,0,0.08) !important; backdrop-filter: blur(12px) !important; background: rgba(255, 255, 255, 0.9) !important; box-shadow: 0 12px 32px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.05) !important; border-radius: 20px !important; }
-            #gemini-anchor-header { font-size: 14px !important; letter-spacing: 0.3px !important; color: #1f1f1f !important; border-bottom: 1px solid rgba(0,0,0,0.05) !important; }
-            #gemini-anchor-list::-webkit-scrollbar { width: 4px; }
-            #gemini-anchor-list::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px; }
+            #${IDS.ANCHOR_PANEL} { font-family: 'Google Sans', 'Segoe UI', system-ui, sans-serif !important;
+            border: 1px solid rgba(0,0,0,0.08) !important; backdrop-filter: blur(12px) !important; background: rgba(255, 255, 255, 0.9) !important;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.05) !important; border-radius: 20px !important;
+            }
+            #gemini-anchor-header { font-size: 14px !important; letter-spacing: 0.3px !important;
+            color: #1f1f1f !important; border-bottom: 1px solid rgba(0,0,0,0.05) !important; }
+            #gemini-anchor-list::-webkit-scrollbar { width: 4px;
+            }
+            #gemini-anchor-list::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px;
+            }
 
             #gemini-anchor-list {
                 list-style: none;
@@ -94,9 +121,13 @@
                 padding: 10px 12px 0 12px !important;
             }
 
-            #gemini-anchor-list li { margin-bottom: 2px !important; border-radius: 12px !important; transition: background-color 0.15s ease !important; border: 1px solid transparent !important; padding: 2px 4px !important; }
-            #gemini-anchor-list li:hover { background-color: rgba(31, 31, 31, 0.05) !important; }
-            #gemini-anchor-list li span { font-size: 13px !important; color: #444746 !important; font-weight: 500 !important; }
+            #gemini-anchor-list li { margin-bottom: 2px !important;
+            border-radius: 12px !important; transition: background-color 0.15s ease !important; border: 1px solid transparent !important; padding: 2px 4px !important;
+            }
+            #gemini-anchor-list li:hover { background-color: rgba(31, 31, 31, 0.05) !important;
+            }
+            #gemini-anchor-list li span { font-size: 13px !important;
+            color: #444746 !important; font-weight: 500 !important; }
 
             /* 悬浮球 (Toggle) 与 浮动按钮 (Float Btn) 的统一视觉 */
             #${IDS.ANCHOR_TOGGLE}, .gemini-float-btn {
@@ -142,15 +173,23 @@
                 transition: transform 0.2s;
             }
 
-            .gemini-anchor-wrapper { display: flex !important; align-items: center !important; justify-content: center !important; height: 32px !important; width: 32px !important; margin-right: 6px !important; }
-            .gemini-anchor-btn-native { background-color: transparent !important; color: #5f6368 !important; border: none !important; border-radius: 50% !important; cursor: pointer !important; display: flex !important; align-items: center !important; justify-content: center !important; width: 32px !important; height: 32px !important; padding: 0 !important; margin: 0 !important; flex: 0 0 auto !important; transition: background-color 0.2s, color 0.2s !important; }
-            .gemini-anchor-btn-native:hover { background-color: rgba(60,64,67,.08) !important; color: #1f1f1f !important; }
-            .gemini-anchor-btn-native.active { color: #0b57d0 !important; }
-            .gemini-anchor-btn-native > div { pointer-events: none !important; }
-            .gemini-empty-tip { padding: 40px 20px !important; text-align: center; color: #8e918f !important; font-size: 13px; }
+            .gemini-anchor-wrapper { display: flex !important; align-items: center !important;
+            justify-content: center !important; height: 32px !important; width: 32px !important; margin-right: 6px !important;
+            }
+            .gemini-anchor-btn-native { background-color: transparent !important; color: #5f6368 !important;
+            border: none !important; border-radius: 50% !important; cursor: pointer !important; display: flex !important; align-items: center !important; justify-content: center !important;
+            width: 32px !important; height: 32px !important; padding: 0 !important; margin: 0 !important; flex: 0 0 auto !important;
+            transition: background-color 0.2s, color 0.2s !important; }
+            .gemini-anchor-btn-native:hover { background-color: rgba(60,64,67,.08) !important;
+            color: #1f1f1f !important; }
+            .gemini-anchor-btn-native.active { color: #0b57d0 !important;
+            }
+            .gemini-anchor-btn-native > div { pointer-events: none !important;
+            }
+            .gemini-empty-tip { padding: 40px 20px !important; text-align: center;
+            color: #8e918f !important; font-size: 13px; }
         `
     };
-
     const el = (tag, styles = {}, parent = null) => {
         const node = document.createElement(tag);
         Object.assign(node.style, styles);
@@ -158,7 +197,6 @@
         if (parent) parent.appendChild(node);
         return node;
     };
-
     const setStyle = (css, id) => {
         let style = document.getElementById(id);
         if (!style) {
@@ -168,7 +206,6 @@
         }
         style.textContent = css;
     };
-
     // --- 4. 统一的模态框管理器 (全系美化) ---
     const ModalManager = {
         _createBase(title) {
@@ -184,12 +221,14 @@
             el('div', { fontSize: '18px', fontWeight: '500', color: '#1f1f1f', textAlign: 'center' }, box).textContent = title;
             return { overlay, box };
         },
-        _close(overlay) { overlay.remove(); },
+        _close(overlay) { overlay.remove();
+        },
         show(title, defaultValue, callback) {
             const { overlay, box } = this._createBase(title);
             const input = el('input', { padding: '12px 16px', borderRadius: '12px', border: '1px solid #e0e0e0', fontSize: '15px', outline: 'none', width: '100%', boxSizing: 'border-box', background: '#f8f9fa', transition: 'all 0.2s' }, box);
             input.onfocus = () => { input.style.background = '#fff'; input.style.borderColor = '#0b57d0'; };
-            input.onblur = () => { input.style.background = '#f8f9fa'; input.style.borderColor = '#e0e0e0'; };
+            input.onblur = () => { input.style.background = '#f8f9fa';
+            input.style.borderColor = '#e0e0e0'; };
             input.value = defaultValue || '';
             const btnGroup = el('div', { display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '4px' }, box);
             this._createBtn(btnGroup, '取消', '#5f6368', '#f1f3f4', () => this._close(overlay));
@@ -221,21 +260,24 @@
             const savedTheme = localStorage.getItem('gemini-theme') || 'light';
             this.applyTheme(savedTheme);
         },
-        setTheme(key) { localStorage.setItem('gemini-theme', key); this.applyTheme(key); },
-        applyTheme(key) { const css = CSS_RULES['common'] + (CSS_RULES[key] || ''); setStyle(css, IDS.STYLE); },
+        setTheme(key) { localStorage.setItem('gemini-theme', key); this.applyTheme(key);
+        },
+        applyTheme(key) { const css = CSS_RULES['common'] + (CSS_RULES[key] || ''); setStyle(css, IDS.STYLE);
+        },
         updateWide(enable) {
             let style = document.getElementById('gemini-wide-css');
             if (enable) {
                 if (!style) {
                     style = el('style');
                     style.id = 'gemini-wide-css';
-                    style.textContent = `mat-sidenav-content, .main-content, .conversation-container, [class*="conversation-container"], [class*="main-content"] { max-width: 1800px !important; } .conversation-container { margin: 0 auto !important; }`;
+                    style.textContent = `mat-sidenav-content, .main-content, .conversation-container, [class*="conversation-container"], [class*="main-content"] { max-width: 1800px !important;
+                    } .conversation-container { margin: 0 auto !important; }`;
                     document.head.appendChild(style);
                 }
-            } else if (style) { style.remove(); }
+            } else if (style) { style.remove();
+            }
         }
     };
-
     // --- 导航模块 (精准滚动修复 + 样式统一) ---
     const NavManager = {
         init() {
@@ -275,16 +317,15 @@
             const viewCenter = window.innerHeight / 3;
             let currentIndex = -1;
             let minDiff = Infinity;
-
             queries.forEach((q, i) => {
                 const rect = q.getBoundingClientRect();
                 const diff = Math.abs(rect.top - viewCenter);
                 if (diff < minDiff) {
                     minDiff = diff;
+
                     currentIndex = i;
                 }
             });
-
             let targetIndex = currentIndex + direction;
 
             // --- 侧边栏排除逻辑 (v7.9) ---
@@ -320,7 +361,6 @@
             }
         }
     };
-
     // --- 锚点模块 ---
     const AnchorManager = {
         data: {},
@@ -338,6 +378,7 @@
                 const panel = document.getElementById(IDS.ANCHOR_PANEL);
                 const toggle = document.getElementById(IDS.ANCHOR_TOGGLE);
                 if (panel && panel.style.visibility === 'visible' && !panel.contains(e.target) && !toggle.contains(e.target)) {
+
                     this.togglePanel();
                 }
             });
@@ -345,10 +386,12 @@
         save() {
             localStorage.setItem('gemini-anchors', JSON.stringify(this.data));
             const panel = document.getElementById(IDS.ANCHOR_PANEL);
-            if (panel && panel.style.visibility === 'visible') { this.renderPanelList(); }
+            if (panel && panel.style.visibility === 'visible') { this.renderPanelList();
+            }
             this.updateToggleVisuals();
         },
-        getCurrentKey() { return window.location.pathname; },
+        getCurrentKey() { return window.location.pathname;
+        },
         getScroller() {
             const scrollers = Array.from(document.querySelectorAll('infinite-scroller'));
             const candidates = scrollers.filter(el => !el.closest('.sidenav-with-history-container') && !el.closest('mat-sidenav'));
@@ -363,7 +406,8 @@
             if (!btn) return;
             const currentKey = this.getCurrentKey();
             const count = (this.data[currentKey] || []).length;
-            if (count > 0) { btn.classList.add('has-anchors'); btn.classList.remove('empty'); } else { btn.classList.add('empty'); btn.classList.remove('has-anchors'); }
+            if (count > 0) { btn.classList.add('has-anchors'); btn.classList.remove('empty');
+            } else { btn.classList.add('empty'); btn.classList.remove('has-anchors'); }
         },
         renderToggle() {
             if (document.getElementById(IDS.ANCHOR_TOGGLE)) return;
@@ -372,7 +416,6 @@
                 right: '20px',
                 transform: 'translateY(calc(-50% - 50px))'
             }, document.body);
-
             btn.id = IDS.ANCHOR_TOGGLE;
             btn.title = "跳转到指定回答";
             el('div', {
@@ -388,6 +431,7 @@
                 panel = el('div', {
                     position: 'fixed', top: '50%', right: '80px', transform: 'translateY(calc(-50% - 50px))', width: '260px', maxHeight: '70vh',
                     display: 'flex', flexDirection: 'column', overflow: 'hidden', zIndex: '9998', opacity: '0', visibility: 'hidden', transition: 'opacity 0.2s ease, visibility 0.2s'
+
                 }, document.body);
                 panel.id = IDS.ANCHOR_PANEL;
                 const header = el('div', { padding: '16px 20px', fontWeight: '600', display: 'flex', alignItems: 'center', color: '#1f1f1f' }, panel);
@@ -397,12 +441,12 @@
 
                 // 将列表容器 id 赋值给 UL
                 el('ul', { padding: '0', margin: '0' }, panel).id = 'gemini-anchor-list';
-
                 const footer = el('div', { padding: '16px', background: 'transparent' }, panel);
                 const clearBtn = el('button', { width: '100%', padding: '10px', border: 'none', background: '#f8f9fa', color: '#d93025', borderRadius: '12px', cursor: 'pointer', fontSize: '13px', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: '500', transition: 'all 0.2s' }, footer);
                 clearBtn.textContent = "清除所有记录";
                 clearBtn.onmouseover = () => { clearBtn.style.background = '#fce8e6'; };
-                clearBtn.onmouseout = () => { clearBtn.style.background = '#f8f9fa'; };
+                clearBtn.onmouseout = () => { clearBtn.style.background = '#f8f9fa';
+                };
                 clearBtn.onclick = () => {
                     const currentKey = this.getCurrentKey();
                     if (!this.data[currentKey] || this.data[currentKey].length === 0) return;
@@ -410,6 +454,7 @@
                         delete this.data[currentKey];
                         this.save();
                         this.refreshAllInlineButtons();
+
                     });
                 };
             }
@@ -426,45 +471,53 @@
             while (list.firstChild) list.removeChild(list.firstChild);
             const anchors = this.data[this.getCurrentKey()] || [];
             if (anchors.length === 0) {
-                const emptyTip = el('li'); emptyTip.className = 'gemini-empty-tip'; emptyTip.textContent = '暂无标记的回答'; list.appendChild(emptyTip); return;
+                const emptyTip = el('li');
+                emptyTip.className = 'gemini-empty-tip'; emptyTip.textContent = '暂无标记的回答'; list.appendChild(emptyTip); return;
             }
             anchors.forEach((anchor, index) => {
                 const li = el('li', { display: 'flex', alignItems: 'center', padding: '0', marginBottom: '4px', borderRadius: '8px', background: 'transparent', cursor: 'pointer' }, list);
                 const link = el('span', { flexGrow: '1', fontSize: '14px', color: '#444746', padding: '12px 8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }, li);
+
                 link.textContent = anchor.name;
                 link.onclick = () => {
                     const target = document.getElementById(anchor.id);
                     if (target) {
+
                         // v8.8 优化：block: 'start'
                         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                         target.style.transition = 'background 0.5s';
                         const oldBg = target.style.backgroundColor;
+
                         target.style.backgroundColor = 'rgba(11, 87, 208, 0.1)';
                         setTimeout(() => target.style.backgroundColor = oldBg, 1500);
                     } else {
                         setTimeout(() => {
                             const retryTarget = document.getElementById(anchor.id);
                             if(retryTarget) retryTarget.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            else alert('未找到该回答');
+
+                             else alert('未找到该回答');
                         }, 500);
                     }
                 };
                 const actionDiv = el('div', { display: 'flex', alignItems: 'center', gap: '4px' }, li);
                 const editBtn = el('div', { width: '28px', height: '28px', cursor: 'pointer', color: '#5f6368', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', transition: 'background 0.2s' }, actionDiv);
-
                 // 修复 2: 使用新的线性 edit 图标
                 el('div', { width: '16px', height: '16px', backgroundColor: 'currentColor', webkitMaskImage: `url('${ICONS.edit}')`, maskImage: `url('${ICONS.edit}')`, webkitMaskSize: 'contain', maskRepeat: 'no-repeat' }, editBtn);
-
                 editBtn.onmouseover = () => { editBtn.style.backgroundColor = 'rgba(0,0,0,0.05)'; editBtn.style.color = '#0b57d0'; };
-                editBtn.onmouseout = () => { editBtn.style.backgroundColor = 'transparent'; editBtn.style.color = '#5f6368'; };
-                editBtn.onclick = (e) => { e.stopPropagation(); ModalManager.show('重命名回答', anchor.name, (newName) => { this.data[this.getCurrentKey()][index].name = newName; this.save(); this.renderPanelList(); }); };
+                editBtn.onmouseout = () => { editBtn.style.backgroundColor = 'transparent';
+                editBtn.style.color = '#5f6368'; };
+                editBtn.onclick = (e) => { e.stopPropagation();
+                ModalManager.show('重命名回答', anchor.name, (newName) => { this.data[this.getCurrentKey()][index].name = newName; this.save(); this.renderPanelList(); }); };
                 const delBtn = el('div', { width: '28px', height: '28px', cursor: 'pointer', color: '#5f6368', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', transition: 'background 0.2s' }, actionDiv);
                 el('div', { width: '16px', height: '16px', backgroundColor: 'currentColor', webkitMaskImage: `url('${ICONS.deleteReal}')`, maskImage: `url('${ICONS.deleteReal}')`, webkitMaskSize: 'contain', maskRepeat: 'no-repeat' }, delBtn);
                 delBtn.onmouseover = () => { delBtn.style.backgroundColor = '#fce8e6'; delBtn.style.color = '#d93025'; };
-                delBtn.onmouseout = () => { delBtn.style.backgroundColor = 'transparent'; delBtn.style.color = '#5f6368'; };
+                delBtn.onmouseout = () => { delBtn.style.backgroundColor = 'transparent';
+                delBtn.style.color = '#5f6368'; };
                 delBtn.onclick = (e) => {
-                    e.stopPropagation(); this.data[this.getCurrentKey()].splice(index, 1); this.save(); this.renderPanelList();
-                    const el = document.getElementById(anchor.id); if(el) { const btn = el.querySelector('.gemini-anchor-btn-native'); if(btn) this.updateInlineBtnState(btn, false); }
+                    e.stopPropagation();
+                    this.data[this.getCurrentKey()].splice(index, 1); this.save(); this.renderPanelList();
+                    const el = document.getElementById(anchor.id); if(el) { const btn = el.querySelector('.gemini-anchor-btn-native'); if(btn) this.updateInlineBtnState(btn, false);
+                    }
                 };
             });
         },
@@ -498,7 +551,8 @@
             const isAdded = (this.data[this.getCurrentKey()] || []).some(a => a.id === node.id);
             this.updateInlineBtnState(btn, isAdded);
             btn.onclick = (e) => {
-                e.stopPropagation(); e.preventDefault();
+                e.stopPropagation();
+                e.preventDefault();
                 if(!node.id) node.id = `gen-anchor-${Math.random().toString(36).substr(2, 9)}`;
                 const currentAnchors = this.data[this.getCurrentKey()] || [];
                 const existingIndex = currentAnchors.findIndex(a => a.id === node.id);
@@ -508,6 +562,7 @@
                     ModalManager.show('标记回答', `回答 ${currentAnchors.length + 1}`, (name) => {
                         if (!this.data[this.getCurrentKey()]) this.data[this.getCurrentKey()] = [];
                         this.data[this.getCurrentKey()].push({ id: node.id, name }); this.save(); this.updateInlineBtnState(btn, true);
+
                     });
                 }
             };
@@ -516,21 +571,26 @@
                 const knownBtn = node.querySelector('thumb-up-button, copy-button, [data-test-id="more-menu-button"]');
                 if (knownBtn) { targetContainer = knownBtn.closest('.buttons-container-v2') || knownBtn.closest('.actions-container-v2'); }
             }
-            if (targetContainer) { if (!targetContainer.querySelector('.gemini-anchor-wrapper')) { targetContainer.insertBefore(wrapper, targetContainer.firstChild); } } else { actionBar.appendChild(wrapper); }
+            if (targetContainer) { if (!targetContainer.querySelector('.gemini-anchor-wrapper')) { targetContainer.insertBefore(wrapper, targetContainer.firstChild);
+            } } else { actionBar.appendChild(wrapper); }
         },
         updateInlineBtnState(btn, active) {
             const icon = btn.firstChild;
             if (active) {
-                icon.style.webkitMaskImage = `url('${ICONS.pinOutline}')`; icon.style.maskImage = `url('${ICONS.pinOutline}')`; btn.classList.add('active'); btn.title = "已标记 (点击移除)";
+                icon.style.webkitMaskImage = `url('${ICONS.pinOutline}')`;
+                icon.style.maskImage = `url('${ICONS.pinOutline}')`; btn.classList.add('active'); btn.title = "已标记 (点击移除)";
             } else {
-                icon.style.webkitMaskImage = `url('${ICONS.pinFilled}')`; icon.style.maskImage = `url('${ICONS.pinFilled}')`; btn.classList.remove('active'); btn.title = "标记此回答";
+                icon.style.webkitMaskImage = `url('${ICONS.pinFilled}')`;
+                icon.style.maskImage = `url('${ICONS.pinFilled}')`; btn.classList.remove('active'); btn.title = "标记此回答";
             }
         },
-        refreshAllInlineButtons() { document.querySelectorAll('.gemini-anchor-btn-native').forEach(btn => { const parent = btn.closest('model-response'); if(parent) { const isAdded = (this.data[this.getCurrentKey()] || []).some(a => a.id === parent.id); this.updateInlineBtnState(btn, isAdded); } }); },
+        refreshAllInlineButtons() { document.querySelectorAll('.gemini-anchor-btn-native').forEach(btn => { const parent = btn.closest('model-response'); if(parent) { const isAdded = (this.data[this.getCurrentKey()] || []).some(a => a.id === parent.id); this.updateInlineBtnState(btn, isAdded); } });
+        },
         assignId(node) {
             if (node.id) return;
             const content = node.querySelector('[id^="message-content-"]');
-            if (content && content.id) { node.id = content.id.replace('message-content-', 'model-resp-'); }
+            if (content && content.id) { node.id = content.id.replace('message-content-', 'model-resp-');
+            }
         },
         robustInject(node) {
             if (!node || node.dataset.anchorPolling) return;
@@ -543,7 +603,8 @@
                     attempts++; this.assignId(node); const actionBar = findContainer();
                     if (node.id && actionBar) { clearInterval(interval); this.injectBtn(node, actionBar); delete node.dataset.anchorPolling; } else if (attempts > 50) { clearInterval(interval); delete node.dataset.anchorPolling; }
                 }, 200);
-            } else { const actionBar = findContainer(); this.injectBtn(node, actionBar); delete node.dataset.anchorPolling; }
+            } else { const actionBar = findContainer(); this.injectBtn(node, actionBar); delete node.dataset.anchorPolling;
+            }
         },
         initObserver() {
             document.querySelectorAll('model-response').forEach(el => this.robustInject(el));
@@ -552,9 +613,11 @@
                 mutations.forEach(m => {
                     m.addedNodes.forEach(n => {
                         if (n.nodeType === 1) {
+
                             if (n.tagName === 'MODEL-RESPONSE') processed.add(n);
                             if (n.querySelectorAll) n.querySelectorAll('model-response').forEach(el => processed.add(el));
                         }
+
                     });
                     if (m.target && (m.target.classList?.contains('buttons-container-v2') || m.target.tagName === 'MESSAGE-ACTIONS')) { const modelResp = m.target.closest('model-response'); if (modelResp) processed.add(modelResp); }
                 });
@@ -569,6 +632,7 @@
                     lastPath = window.location.pathname;
                     setTimeout(() => { this.renderPanelList(); this.updateToggleVisuals(); document.querySelectorAll('model-response').forEach(el => this.robustInject(el)); }, 500);
                 }
+
             }, 1000);
         }
     };
@@ -597,17 +661,23 @@
                 if (text.length < 2 || ['Show drafts', 'Listen', 'share'].includes(text) || text === last) return;
                 let role = 'Note';
                 const check = (el) => {
+
                     const id = el.getAttribute('data-test-id');
                     if (id === 'user-query') return 'User';
                     if (id === 'model-response') return 'Gemini';
                     const cls = el.className || '';
+
                     if (cls.includes && (cls.includes('user') || cls.includes('query'))) return 'User';
                     if (cls.includes && (cls.includes('model') || cls.includes('mark'))) return 'Gemini';
                     return null;
                 };
+
                 role = check(n);
-                if (!role && n.closest) { const pUser = n.closest('[data-test-id="user-query"], .user-query'); const pGemini = n.closest('[data-test-id="model-response"], .model-response'); if (pUser) role = 'User'; else if (pGemini) role = 'Gemini'; }
-                if (role === 'User') md += `### User\n`; else if (role === 'Gemini') md += `### Gemini\n`;
+                if (!role && n.closest) { const pUser = n.closest('[data-test-id="user-query"], .user-query'); const pGemini = n.closest('[data-test-id="model-response"], .model-response');
+                if (pUser) role = 'User'; else if (pGemini) role = 'Gemini';
+                }
+                if (role === 'User') md += `### User\n`;
+                else if (role === 'Gemini') md += `### Gemini\n`;
                 md += `${text}\n\n---\n\n`; last = text;
             });
             const blob = new Blob([md], { type: 'text/markdown' });
@@ -625,10 +695,12 @@
     const MainPanel = {
         init() {
             if (document.getElementById(IDS.THEME_PANEL)) return;
+
             const panel = el('div', {
                 position: 'fixed', bottom: '200px', right: '24px', display: 'flex', flexDirection: 'column', gap: '8px',
                 zIndex: '2147483647', background: 'rgba(255,255,255,0.9)', padding: '6px 5px',
                 borderRadius: '50px', boxShadow: '0 2px 10px rgba(0,0,0,0.12)', backdropFilter: 'blur(8px)',
+
                 transition: 'opacity 0.3s'
             }, document.body);
             panel.id = IDS.THEME_PANEL;
@@ -650,7 +722,8 @@
             btn.onclick = (e) => {
                 e.stopPropagation();
                 if (type === 'action') return ExportManager.doExport();
-                if (type === 'toggle') { const newState = !(localStorage.getItem(`gemini-${key}`) === 'true'); localStorage.setItem(`gemini-${key}`, newState); ThemeManager.updateWide(newState); } else { ThemeManager.setTheme(key); }
+                if (type === 'toggle') { const newState = !(localStorage.getItem(`gemini-${key}`) === 'true'); localStorage.setItem(`gemini-${key}`, newState); ThemeManager.updateWide(newState);
+                } else { ThemeManager.setTheme(key); }
                 this.updateActive();
             };
         },
@@ -664,6 +737,7 @@
                 let active = false;
                 if (type === 'theme') active = (mode === currentTheme);
                 if (mode === 'wide') active = isWide;
+
                 btn.dataset.active = active;
                 btn.style.background = active ? '#e8f0fe' : 'transparent';
                 btn.style.color = active ? '#1a73e8' : '#5f6368';
