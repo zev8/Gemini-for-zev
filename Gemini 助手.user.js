@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Gemini 助手 (v9.0)
 // @namespace    http://tampermonkey.net/
-// @version      8.9
-// @description  Gemini 增强：导出文件自动使用对话标题，全线性图标，修复侧边栏误触，支持一键导航。
+// @version      9.0
+// @description  Gemini 增强：隐藏最近项目预览，导出文件自动使用对话标题，全线性图标，修复侧边栏误触，支持一键导航。
 // @author       GeminiUser
 // @match        https://gemini.google.com/*
 // @grant        none
@@ -82,7 +82,7 @@
             #${IDS.MODAL} input { color: #000 !important;
             background: #f0f0f0 !important; }
         `,
-        // 3. 舒适模式 (护眼 - 定制版) [已根据您的要求精确调整]
+        // 3. 舒适模式 (护眼 - 定制版)
         eyeCare: `
             html {
                 /* 亮度: 0.95, Sepia: 0.7, 饱和度: 1.5, 背景: #f3e6c1 */
@@ -101,6 +101,11 @@
             }
         `,
         common: `
+            /* --- v9.0 新增: 隐藏最近预览组件 --- */
+            my-stuff-recents-preview {
+                display: none !important;
+            }
+
             /* 面板美化 */
             #${IDS.ANCHOR_PANEL} { font-family: 'Google Sans', 'Segoe UI', system-ui, sans-serif !important;
             border: 1px solid rgba(0,0,0,0.08) !important; backdrop-filter: blur(12px) !important; background: rgba(255, 255, 255, 0.9) !important;
